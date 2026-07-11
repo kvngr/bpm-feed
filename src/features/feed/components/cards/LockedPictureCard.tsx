@@ -1,7 +1,7 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ThumbImage } from "@/components/ui/ThumbImage";
 import { Icon } from "@/components/ui/Icon";
-import { colors } from "@/theme/tokens";
+import { colors, radius, spacing } from "@/theme/tokens";
 import type { LockedPictureCard as LockedPictureCardModel } from "@/domain/types";
 
 /**
@@ -14,28 +14,50 @@ export function LockedPictureCard({
   content: LockedPictureCardModel["content"];
 }) {
   return (
-    <View className="w-full aspect-[4/5] items-center justify-center">
-      <ThumbImage
-        thumbhash={content.thumbhash}
-        blurRadius={24}
-        className="absolute inset-0 h-full w-full"
-      />
-      <View className="absolute inset-0 bg-brand-dark/55" />
+    <View style={styles.root}>
+      <ThumbImage thumbhash={content.thumbhash} style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, styles.overlay]} />
 
-      <View className="items-center gap-2 px-6">
-        <View className="mb-1 h-14 w-14 items-center justify-center rounded-full bg-white/15">
+      <View style={styles.center}>
+        <View style={styles.lock}>
           <Icon name="lock" size={26} color={colors.white} />
         </View>
-        <Text className="text-base font-semibold text-white">
-          {content.promptTitle ?? "Photo privée"}
-        </Text>
-        <Text className="text-center text-xs text-white/75">
-          Visible après un match ou avec BPM Premium
-        </Text>
-        <Pressable className="mt-2 rounded-full bg-white px-5 py-2.5">
-          <Text className="text-sm font-semibold text-brand">Débloquer</Text>
+        <Text style={styles.title}>{content.promptTitle ?? "Photo privée"}</Text>
+        <Text style={styles.subtitle}>Visible après un match ou avec BPM Premium</Text>
+        <Pressable
+          style={({ pressed }) => [styles.cta, pressed && styles.pressed]}
+          accessibilityRole="button"
+          accessibilityLabel="Débloquer la photo"
+        >
+          <Text style={styles.ctaText}>Débloquer</Text>
         </Pressable>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { width: "100%", aspectRatio: 4 / 5, alignItems: "center", justifyContent: "center" },
+  overlay: { backgroundColor: "rgba(0,0,0,0.55)" },
+  center: { alignItems: "center", gap: spacing.sm, paddingHorizontal: spacing.xxl },
+  lock: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.xs,
+  },
+  title: { fontSize: 16, fontWeight: "700", color: colors.white },
+  subtitle: { fontSize: 12, color: "rgba(255,255,255,0.75)", textAlign: "center" },
+  cta: {
+    marginTop: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.white,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  ctaText: { fontSize: 14, fontWeight: "700", color: colors.onLight },
+  pressed: { opacity: 0.85 },
+});

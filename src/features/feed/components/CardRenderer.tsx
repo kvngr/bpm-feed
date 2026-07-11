@@ -23,6 +23,12 @@ interface CardRendererProps {
   onLike: (cardId: string) => void;
 }
 
+/** Compile-time exhaustiveness guard: adding a `KnownCard` variant without a
+ *  matching `switch` case becomes a type error here. */
+function assertNever(card: never): never {
+  throw new Error(`Unhandled card type: ${JSON.stringify(card)}`);
+}
+
 /**
  * Picks the right component for a card. Unknown types bypass the frame and
  * degrade via `UnknownCard`. Once we've guarded the known set, the `switch`
@@ -47,6 +53,8 @@ export function CardRenderer({ card, onLike }: CardRendererProps) {
         return <InfoCard content={known.content} />;
       case "locked_picture":
         return <LockedPictureCard content={known.content} />;
+      default:
+        return assertNever(known);
     }
   })();
 

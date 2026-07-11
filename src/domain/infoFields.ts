@@ -5,8 +5,7 @@
  * info. Returning `null` from `value()` hides the row entirely — that's how we
  * deal with nullable fields (e.g. `education: null`) without branching in JSX.
  *
- * `age` and `city` are intentionally omitted here: they already appear in the
- * profile header, so the info card avoids duplicating them.
+ * The top bar only shows the name, so age and city lead the list here.
  */
 import type { ProfileInfo } from "./types";
 import { label } from "./labels";
@@ -18,6 +17,16 @@ export interface InfoField {
 }
 
 export const INFO_FIELDS: InfoField[] = [
+  {
+    key: "age",
+    icon: "cake-variant-outline",
+    value: (i) => (i.age ? `${i.age} ans` : null),
+  },
+  {
+    key: "city",
+    icon: "map-marker-outline",
+    value: (i) => i.city ?? null,
+  },
   {
     key: "height",
     icon: "human-male-height",

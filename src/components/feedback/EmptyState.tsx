@@ -1,6 +1,6 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Icon } from "@/components/ui/Icon";
-import { colors } from "@/theme/tokens";
+import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 interface EmptyStateProps {
   icon?: string;
@@ -19,19 +19,51 @@ export function EmptyState({
   onAction,
 }: EmptyStateProps) {
   return (
-    <View className="flex-1 items-center justify-center gap-3 px-10">
-      <Icon name={icon} size={44} color={colors.inkMuted} />
-      <Text className="text-center text-lg font-semibold text-ink">{title}</Text>
-      <Text className="text-center text-sm text-ink-muted">{subtitle}</Text>
+    <View style={styles.root}>
+      <View style={styles.iconWrap}>
+        <Icon name={icon} size={30} color={colors.textMuted} />
+      </View>
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.subtitle}>{subtitle}</Text>
       {actionLabel && onAction ? (
         <Pressable
           onPress={onAction}
+          style={({ pressed }) => [styles.button, pressed && styles.pressed]}
           accessibilityRole="button"
-          className="mt-2 rounded-full bg-brand px-6 py-3"
         >
-          <Text className="font-semibold text-white">{actionLabel}</Text>
+          <Text style={styles.buttonText}>{actionLabel}</Text>
         </Pressable>
       ) : null}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.md,
+    paddingHorizontal: 40,
+  },
+  iconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.xs,
+  },
+  title: { ...typography.cardTitle, fontSize: 18, textAlign: "center" },
+  subtitle: { ...typography.caption, textAlign: "center", lineHeight: 19 },
+  button: {
+    marginTop: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.brand,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+  },
+  buttonText: { color: colors.white, fontWeight: "700", fontSize: 15 },
+  pressed: { opacity: 0.85 },
+});

@@ -1,10 +1,10 @@
-import { httpClient } from "./client";
+import { http } from "./client";
 import type { Card, FeedResponse, Profile } from "@/domain/types";
 import feedFixture from "../../assets/mock/feed-response-example.json";
 
 /**
  * The example feed lives behind a time-limited Notion signed URL. We try it
- * first (so the app exercises a real axios + network path), then fall back to
+ * first (so the app exercises a real fetch + network path), then fall back to
  * the bundled fixture when the URL has expired or the device is offline.
  *
  * Point this at the real BPM endpoint in production.
@@ -25,9 +25,9 @@ function normalize(data: FeedResponse): FeedResponse {
   return { profiles };
 }
 
-export async function fetchFeed(): Promise<FeedResponse> {
+export async function fetchFeed(signal?: AbortSignal): Promise<FeedResponse> {
   try {
-    const { data } = await httpClient.get<FeedResponse>(FEED_URL);
+    const data = await http.get<FeedResponse>(FEED_URL, { signal });
     if (data?.profiles?.length) return normalize(data);
     throw new Error("Empty feed payload");
   } catch {

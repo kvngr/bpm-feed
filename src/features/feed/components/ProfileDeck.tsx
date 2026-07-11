@@ -1,27 +1,28 @@
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Animated from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useProfileDeck } from "../hooks/useProfileDeck";
+import { LinearGradient } from "expo-linear-gradient";
+import type { useProfileDeck } from "../hooks/useProfileDeck";
 import { ProfileView } from "./ProfileView";
-import { PassButton } from "@/components/ui/PassButton";
+import { PassButton } from "./PassButton";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { haptics } from "@/lib/haptics";
-import type { Profile } from "@/domain/types";
+import { ACTION_BUTTON_SIZE, spacing } from "@/theme/tokens";
 
 interface ProfileDeckProps {
-  profiles: Profile[];
+  deck: ReturnType<typeof useProfileDeck>;
   refreshing: boolean;
   onRefresh: () => void;
 }
 
 /**
  * One profile at a time. The current profile scrolls vertically; the sticky
- * pass button (bottom-left) throws it away and reveals the next one. When the
- * deck runs out, a "seen everyone" state offers to start over.
+ * pass button (bottom-left) throws it away and reveals the next. A soft bottom
+ * scrim fades scrolling content beneath the floating button so the ✕ always
+ * reads as a control on top — never as text collision. When the deck runs out,
+ * a "seen everyone" state offers to start over.
  */
-export function ProfileDeck({ profiles, refreshing, onRefresh }: ProfileDeckProps) {
-  const insets = useSafeAreaInsets();
-  const { profile, exhausted, animatedStyle, pass, like, reset } = useProfileDeck(profiles);
+export function ProfileDeck({ deck, refreshing, onRefresh }: ProfileDeckProps) {
+  const { profile, exhausted, animatedStyle, pass, like, reset } = deck;
 
   if (exhausted || !profile) {
     return (
@@ -40,25 +41,38 @@ export function ProfileDeck({ profiles, refreshing, onRefresh }: ProfileDeckProp
     pass();
   };
 
+  // The tab bar below already owns the bottom safe area, so this is a fixed gap.
+  const buttonBottom = spacing.lg;
+
   return (
-    <View className="flex-1">
-      <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+    <View style={styles.root}>
+      <Animated.View style={[styles.deck, animatedStyle]}>
         <ProfileView
           key={profile.userId}
           profile={profile}
           onLiked={like}
           refreshing={refreshing}
           onRefresh={onRefresh}
-          bottomInset={insets.bottom + 96}
+          bottomInset={buttonBottom + ACTION_BUTTON_SIZE + spacing.xxl}
         />
       </Animated.View>
 
-      <View
-        pointerEvents="box-none"
-        style={{ position: "absolute", left: 20, bottom: insets.bottom + 20 }}
-      >
+      <LinearGradient
+        pointerEvents="none"
+        colors={["rgba(11,11,13,0)", "rgba(11,11,13,0.85)"]}
+        style={[styles.scrim, { height: buttonBottom + ACTION_BUTTON_SIZE + spacing.xxl }]}
+      />
+
+      <View pointerEvents="box-none" style={[styles.passWrap, { bottom: buttonBottom }]}>
         <PassButton onPress={handlePass} />
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  deck: { flex: 1 },
+  scrim: { position: "absolute", left: 0, right: 0, bottom: 0 },
+  passWrap: { position: "absolute", left: spacing.xl },
+});

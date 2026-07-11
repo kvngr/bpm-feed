@@ -1,25 +1,53 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Icon } from "@/components/ui/Icon";
-import { colors } from "@/theme/tokens";
+import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 /** Full-screen error with a retry action. */
 export function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
-    <View className="flex-1 items-center justify-center gap-4 px-10">
-      <Icon name="heart-broken-outline" size={44} color={colors.brand} />
-      <Text className="text-center text-lg font-semibold text-ink">
-        Impossible de charger le feed
-      </Text>
-      <Text className="text-center text-sm text-ink-muted">
-        Vérifie ta connexion et réessaie.
-      </Text>
+    <View style={styles.root}>
+      <View style={styles.iconWrap}>
+        <Icon name="heart-broken-outline" size={30} color={colors.brand} />
+      </View>
+      <Text style={styles.title}>Impossible de charger le feed</Text>
+      <Text style={styles.subtitle}>Vérifie ta connexion et réessaie.</Text>
       <Pressable
         onPress={onRetry}
-        className="mt-2 rounded-full bg-brand px-6 py-3"
+        style={({ pressed }) => [styles.button, pressed && styles.pressed]}
         accessibilityRole="button"
       >
-        <Text className="font-semibold text-white">Réessayer</Text>
+        <Text style={styles.buttonText}>Réessayer</Text>
       </Pressable>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.md,
+    paddingHorizontal: 40,
+  },
+  iconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.xs,
+  },
+  title: { ...typography.cardTitle, fontSize: 18, textAlign: "center" },
+  subtitle: { ...typography.caption, textAlign: "center" },
+  button: {
+    marginTop: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.brand,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.md,
+  },
+  buttonText: { color: colors.white, fontWeight: "700", fontSize: 15 },
+  pressed: { opacity: 0.85 },
+});

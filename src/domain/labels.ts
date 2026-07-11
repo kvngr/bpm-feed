@@ -18,21 +18,26 @@ function pick(dict: Record<string, string>, value: string): string {
   return dict[value] ?? humanize(value);
 }
 
-export const trainingFrequency: Record<
-  TrainingFrequency,
-  { label: string; level: 1 | 2 | 3 }
-> = {
-  little: { label: "Occasionnel", level: 1 },
-  mid: { label: "Régulier", level: 2 },
-  hard: { label: "Intensif", level: 3 },
+/** Training frequency → an intensity level (drives the activity-ring fill). */
+const frequencyLevels: Record<TrainingFrequency, 1 | 2 | 3> = {
+  little: 1,
+  mid: 2,
+  hard: 3,
 };
 
-export function frequencyLabel(value: string): string {
-  return (trainingFrequency as Record<string, { label: string }>)[value]?.label ?? humanize(value);
+export function frequencyLevel(value: string): 1 | 2 | 3 {
+  return (frequencyLevels as Record<string, 1 | 2 | 3>)[value] ?? 1;
 }
 
-export function frequencyLevel(value: string): 1 | 2 | 3 {
-  return (trainingFrequency as Record<string, { level: 1 | 2 | 3 }>)[value]?.level ?? 1;
+/** Sessions-per-week shorthand shown on the sport card (little → "1-2", hard → "5+"). */
+const sessionsByFrequency: Record<TrainingFrequency, string> = {
+  little: "1-2",
+  mid: "3-4",
+  hard: "5+",
+};
+
+export function sessionsPerWeek(value: string): string {
+  return (sessionsByFrequency as Record<string, string>)[value] ?? "—";
 }
 
 const relationshipType: Record<string, string> = {
@@ -110,7 +115,6 @@ export const label = {
   diet: (v: string) => pick(diet, v),
   drinking: (v: string) => pick(frequencyWord, v),
   smoking: (v: string) => pick(smoking, v),
-  drugs: (v: string) => pick(frequencyWord, v),
   kids: (v: string) => pick(kids, v),
   pets: (v: string) => pick(pets, v),
   religion: (v: string) => pick(religion, v),

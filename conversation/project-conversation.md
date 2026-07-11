@@ -240,8 +240,8 @@ This document, committed and pushed to `master`.
 | Concern       | Choice                                                   |
 | ------------- | -------------------------------------------------------- |
 | Framework     | Expo SDK 54 + TypeScript (React Native, runs in Expo Go) |
-| Data fetching | TanStack Query + axios                                   |
-| Styling       | NativeWind (Tailwind for RN)                             |
+| Data fetching | TanStack Query + native `fetch`                          |
+| Styling       | StyleSheet + design tokens (`src/theme/tokens.ts`)       |
 | Animation     | react-native-reanimated                                  |
 | Charts        | react-native-svg (`ActivityRings`)                       |
 | Haptics       | expo-haptics                                             |
@@ -249,5 +249,43 @@ This document, committed and pushed to `master`.
 | Gradients     | expo-linear-gradient                                     |
 | Icons         | @expo/vector-icons                                       |
 
-The feed is presented **one profile at a time**, Hinge-style: scroll a profile's
-cards, like (♥, advances right) or pass (✕ sticky bottom-left, advances left).
+The feed is presented **one profile at a time**: scroll a profile's cards, like
+(♥, advances right) or pass (✕ sticky bottom-left, advances left).
+
+---
+
+## 15. Review round — dark redesign + stack cleanup
+
+> Retour premier test technique […] L'objectif de ce test est de tester ton œil
+> et actuellement l'output n'est pas du tout au niveau. […] l'application de test
+> doit ressembler comme 2 gouttes d'eau à l'application BPM.
+
+The reviewer's "résultat attendu" showed BPM's real **dark** UI; what had shipped
+was a light Hinge-style build with a visible bug — the sticky ✕ overlapping (and
+appearing to clip) prompt text. Plus code notes: _why Expo 54, why axios,
+NativeWind isn't great, and keep `features/` discipline (feed components had
+leaked into `components/`)._
+
+**Done — every point addressed:**
+
+- **Dark redesign to match BPM.** Charcoal canvas, elevated cards, a top app bar
+  (profile name + filters / rewind / boost), neon activity rings under a
+  "Séances / semaine" legend, a bottom tab bar (Home / Likes / Matches /
+  Profile), and the BPM heartbeat mark. Status bar and app theme set to dark.
+- **The ✕ bug, fixed structurally.** On dark the pass button is a solid, shadowed
+  control; a bottom **scrim** fades scrolling content beneath it so the ✕ always
+  reads as "on top." Prompt/photo text now reserves the button's corner, so it
+  can never be clipped or overlapped, however long it runs.
+- **axios → native `fetch`.** A tiny typed client (timeout, cancellation, JSON,
+  typed errors). Removes the RN-adapter caveat and the axios CVE.
+- **NativeWind → StyleSheet + tokens.** No utility-class runtime or extra
+  Babel/Metro transform — and it retires the class of bug that previously mangled
+  the buttons' `style`.
+- **`features/` discipline.** `components/` is now generic-only; `LikeButton`,
+  `PassButton`, `FeedSkeleton`, `TopBar` moved under `features/feed/`. Dead code
+  removed (`Tag`, the `sportIcon` map). New shell chrome lives in `navigation/`.
+- **Expo 54 justified, not just inherited:** it's what keeps the app runnable in
+  the public Expo Go with no dev build.
+- **Rewind** added (top-bar ↺) to undo the last pass/like.
+
+Validated with `tsc --noEmit` and a production `expo export` (1189 modules, clean).

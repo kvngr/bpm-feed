@@ -1,9 +1,8 @@
 import { RefreshControl, ScrollView } from "react-native";
 import { useLikeCard } from "../hooks/useLikeCard";
-import { colors } from "@/theme/tokens";
-import type { Profile } from "@/domain/types";
-import { ProfileHeader } from "./ProfileHeader";
 import { CardRenderer } from "./CardRenderer";
+import { colors, spacing } from "@/theme/tokens";
+import type { Profile } from "@/domain/types";
 
 interface ProfileViewProps {
   profile: Profile;
@@ -15,8 +14,8 @@ interface ProfileViewProps {
 }
 
 /**
- * A single profile: header + its ordered card stack, scrolled vertically.
- * Liking a card records the like and advances the deck (like other dating apps).
+ * A single profile: its ordered card stack, scrolled vertically (the name lives
+ * in the top bar). Liking a card records the like and advances the deck.
  */
 export function ProfileView({
   profile,
@@ -35,17 +34,20 @@ export function ProfileView({
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: bottomInset }}
+      contentContainerStyle={{
+        paddingHorizontal: spacing.lg,
+        paddingTop: spacing.xs,
+        paddingBottom: bottomInset,
+      }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor={colors.brand}
+          tintColor={colors.textMuted}
           colors={[colors.brand]}
         />
       }
     >
-      <ProfileHeader profile={profile} />
       {profile.cards.map((card) => (
         <CardRenderer key={card.id} card={card} onLike={handleLike} />
       ))}

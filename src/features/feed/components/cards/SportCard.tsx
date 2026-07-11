@@ -1,36 +1,26 @@
-import { Text, View } from "react-native";
-import { Icon } from "@/components/ui/Icon";
-import { ActivityRings, RING_PALETTE } from "@/components/ui/ActivityRings";
-import { frequencyLabel, frequencyLevel } from "@/domain/labels";
-import { sportIcon } from "@/domain/sports";
+import { StyleSheet, Text, View } from "react-native";
+import { ActivityRings } from "@/components/ui/ActivityRings";
+import { RING_PALETTE, colors, spacing, typography } from "@/theme/tokens";
+import { frequencyLevel, sessionsPerWeek } from "@/domain/labels";
 import type { Sport, SportCard as SportCardModel } from "@/domain/types";
 
-/** Legend row: sport icon tinted to its ring color + name + frequency. */
-function LegendRow({ sport, color }: { sport: Sport; color: string }) {
+/** One legend line: sport name, a dotted leader, and its weekly session count. */
+function SessionRow({ sport, color }: { sport: Sport; color: string }) {
   return (
-    <View className="flex-row items-center gap-2.5">
-      <View
-        style={{ backgroundColor: `${color}22` }}
-        className="h-8 w-8 items-center justify-center rounded-full"
-      >
-        <Icon name={sportIcon(sport.sportIcon)} size={15} color={color} />
-      </View>
-      <View className="flex-1">
-        <Text className="text-[13px] font-semibold text-ink" numberOfLines={1}>
-          {sport.sportName}
-        </Text>
-        <Text className="text-[11px] text-ink-muted">
-          {frequencyLabel(sport.trainingFrequency)}
-        </Text>
-      </View>
+    <View style={styles.row}>
+      <Text style={styles.sportName} numberOfLines={1}>
+        {sport.sportName}
+      </Text>
+      <View style={styles.leader} />
+      <Text style={[styles.value, { color }]}>{sessionsPerWeek(sport.trainingFrequency)}</Text>
     </View>
   );
 }
 
 /**
- * BPM's signature card: training intensity shown as Apple-Watch-style activity
- * rings (one ring per sport, filled by training frequency), with a
- * color-matched legend. The rings encode intensity, so no separate label.
+ * BPM's signature card: training intensity as Apple-Watch-style activity rings
+ * (one ring per sport, filled by frequency), beside a legend of weekly sessions.
+ * The rings encode intensity, so each row's value is color-matched to its ring.
  */
 export function SportCard({ content }: { content: SportCardModel["content"] }) {
   const sports = content.sports.slice(0, RING_PALETTE.length);
@@ -40,16 +30,37 @@ export function SportCard({ content }: { content: SportCardModel["content"] }) {
   }));
 
   return (
-    <View className="gap-4 p-6">
-      <Text className="text-lg font-bold text-ink">Ses sports</Text>
-      <View className="flex-row items-center gap-5">
-        <ActivityRings rings={rings} size={128} />
-        <View className="flex-1 gap-3">
-          {sports.map((sport, i) => (
-            <LegendRow key={sport.sportKey} sport={sport} color={RING_PALETTE[i]} />
-          ))}
-        </View>
+    <View style={styles.card}>
+      <ActivityRings rings={rings} size={116} trackColor={colors.ringTrack} />
+      <View style={styles.legend}>
+        <Text style={styles.overline}>Séances / semaine</Text>
+        {sports.map((sport, i) => (
+          <SessionRow key={sport.sportKey} sport={sport} color={RING_PALETTE[i]} />
+        ))}
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xl,
+    paddingVertical: spacing.xxl,
+    paddingHorizontal: spacing.xxl,
+  },
+  legend: { flex: 1, gap: spacing.md },
+  overline: { ...typography.overline, marginBottom: 2 },
+  row: { flexDirection: "row", alignItems: "center" },
+  sportName: { ...typography.body, flexShrink: 1 },
+  leader: {
+    flex: 1,
+    height: 1,
+    borderBottomWidth: 1,
+    borderStyle: "dotted",
+    borderColor: colors.hairline,
+    marginHorizontal: spacing.sm,
+  },
+  value: { fontSize: 15, fontWeight: "800" },
+});

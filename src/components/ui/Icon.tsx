@@ -12,6 +12,6 @@ interface IconProps {
  * glyph names as plain strings (our domain maps produce strings, not the
  * library's literal union).
  */
-export function Icon({ name, size = 20, color = colors.ink }: IconProps) {
+export function Icon({ name, size = 20, color = colors.text }: IconProps) {
   return <MaterialCommunityIcons name={name as never} size={size} color={color} />;
 }

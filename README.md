@@ -1,44 +1,52 @@
 # BPM — Feed
 
-A small **Expo / React Native** app that renders the BPM discovery feed (a
-sport-focused dating app). It fetches a list of profiles and renders each one as
-an ordered stack of heterogeneous **cards**, handling every card type and edge
-case in the sample payload.
-
-<p align="center"><em>Discover profiles · photos · prompts · sports · vitals · locked photos</em></p>
+A small **Expo / React Native** app that renders the BPM discovery feed. BPM
+("Battements Par Minute") is a sport-focused dating app, and the product is
+**dark-themed**: a deep charcoal canvas, softly elevated cards, neon activity
+rings, and a one-profile-at-a-time deck. The app fetches a list of profiles and
+renders each as an ordered stack of heterogeneous **cards**, handling every card
+type and edge case in the sample payload.
 
 ---
 
 ## Stack & choices
 
-| Concern      | Library                     | Note |
-|--------------|-----------------------------|------|
-| Framework    | Expo (SDK 54) + TypeScript  | React Native, iOS / Android, runs in Expo Go |
-| Data fetching| **TanStack Query** + **axios** | as requested |
-| Styling      | **NativeWind** (Tailwind for RN) | `className` on native components |
-| Animation    | **react-native-reanimated** | springs, interpolation, deck transitions — runs on the UI thread |
-| Haptics      | `expo-haptics`              | tactile feedback on like / pass |
-| Images       | `expo-image`                | native **thumbhash** placeholders + fade-in |
-| Icons        | `@expo/vector-icons`        | MaterialCommunityIcons |
+| Concern       | Library                          | Note                                              |
+| ------------- | -------------------------------- | ------------------------------------------------- |
+| Framework     | Expo (SDK 54) + TypeScript       | React Native, iOS / Android, runs in Expo Go      |
+| Data fetching | **TanStack Query** + native `fetch` | server-state cache over a tiny typed HTTP helper |
+| Styling       | **StyleSheet** + design tokens   | one theme file (`src/theme/tokens.ts`)            |
+| Animation     | **react-native-reanimated**      | like burst, deck transitions — on the UI thread   |
+| Charts        | **react-native-svg**             | the `ActivityRings` component                     |
+| Haptics       | `expo-haptics`                   | tactile feedback on like / pass                   |
+| Images        | `expo-image`                     | native **thumbhash** placeholders + fade-in       |
+| Icons         | `@expo/vector-icons`             | MaterialCommunityIcons                            |
 
-> **Why NativeWind, not Tailwind directly?** The Tailwind runtime targets the
-> web DOM and doesn't run on React Native. **NativeWind** _is_ Tailwind for RN —
-> same class names, same config, native rendering.
->
-> **Why Reanimated, not Framer Motion?** Framer Motion is web-DOM only. The
-> animations here are interaction-driven (like burst, pass fly-out) or looping
-> (skeleton), so they're written directly in **Reanimated** — everything runs on
-> the UI thread and stays at 60fps even while JS is busy.
->
-> **Why SDK 54?** The public App Store Expo Go tops out at SDK 54, so pinning
-> there keeps the app runnable in Expo Go with no dev build. Newer SDKs would
-> require a development build.
+### Why these choices (and why not the obvious alternatives)
+
+- **Native `fetch`, not axios.** On React Native axios needs a custom adapter to
+  behave well, ships more weight than a wrapper needs, and has had recent CVEs.
+  `fetch` is built into the runtime; `src/api/client.ts` wraps it with a timeout,
+  JSON parsing, cancellation, and typed errors — the one place a real app would
+  set `BASE_URL` and attach auth headers.
+- **StyleSheet + tokens, not NativeWind.** Styling is plain `StyleSheet.create`
+  reading from a single `theme/tokens.ts` (colors, spacing, radii, typography,
+  shadows). No utility-class runtime, no extra Babel/Metro transform, and no
+  class-name layer that can silently mangle a component's `style` — everything is
+  explicit and type-checked.
+- **Reanimated, not Framer Motion.** Framer Motion is web-DOM only. The
+  animations here are interaction-driven (like burst, pass fly-out) or looping
+  (skeleton), so they run directly on the UI thread and stay at 60fps.
+- **Expo SDK 54 — deliberate.** The public App Store Expo Go tops out at SDK 54,
+  so pinning there lets a reviewer run the app by scanning a QR code — **no dev
+  build, no native toolchain**. A newer SDK would force a development build and
+  defeat the point of a quick technical test.
 
 ## Run it
 
 ```bash
 npm install
-npx expo start          # then press i (iOS), a (Android), or scan with Expo Go
+npm start          # then scan the QR code with Expo Go, or press i / a
 ```
 
 The feed loads instantly even offline: `fetchFeed()` tries the remote (Notion
@@ -47,71 +55,73 @@ signed) URL first, then falls back to the bundled sample in
 
 ## Architecture (separation of concerns)
 
-Each layer has one job; UI never fetches, and components never hard-code copy.
+Each layer has one job; UI never fetches, components never hard-code copy, and
+**`components/` holds only generic, feature-agnostic UI** — anything specific to
+the feed lives under `features/feed/`.
 
 ```
 App.tsx                         # providers only (QueryClient, SafeArea)
 src/
-├─ api/                         # transport — axios client, feed + likes endpoints
-│  ├─ client.ts  feed.ts  likes.ts
-├─ domain/                      # meaning — types + value→label/icon mappings
+├─ api/                         # transport — fetch client, feed + likes endpoints
+│  └─ client.ts  feed.ts  likes.ts
+├─ domain/                      # meaning — types + value→label mappings
 │  ├─ types.ts                  # discriminated union of card kinds
-│  ├─ labels.ts  infoFields.ts  sports.ts
-├─ lib/           (queryClient, haptics)
-├─ theme/tokens.ts
-├─ components/                  # generic, reusable UI
-│  ├─ ui/         (Icon, ThumbImage, Tag, LikeButton, PassButton)
-│  └─ feedback/   (FeedSkeleton, ErrorState, EmptyState)
-└─ features/feed/               # the feature
-   ├─ hooks/      (useFeed, useLikeCard, useProfileDeck)
-   ├─ screens/FeedScreen.tsx                 # query-state → UI
-   └─ components/
-      ├─ ProfileDeck → ProfileView → ProfileHeader + CardRenderer   # one at a time
-      └─ CardRenderer → cards/{Picture,PromptAnswer,Sport,Info,LockedPicture,Unknown}
+│  └─ labels.ts  infoFields.ts
+├─ lib/                         # queryClient, haptics
+├─ theme/tokens.ts              # the single source of truth for the look
+├─ components/                  # GENERIC, reusable UI only
+│  ├─ ui/         Icon · ThumbImage · ActivityRings · BpmLogo · Badge
+│  └─ feedback/   ErrorState · EmptyState · PlaceholderScreen
+├─ navigation/    AppShell · TabBar          # app chrome (Home / Likes / Matches / Profile)
+└─ features/feed/                            # the feature — everything feed-specific
+   ├─ hooks/      useFeed · useLikeCard · useProfileDeck
+   ├─ screens/    FeedScreen                 # query-state → UI, owns the deck
+   └─ components/ TopBar · ProfileDeck · ProfileView · FeedSkeleton
+      ├─ LikeButton · PassButton · CardFrame · CardRenderer
+      └─ cards/   Picture · PromptAnswer · Sport · Info · LockedPicture · Unknown
 ```
 
 The key seam is **`CardRenderer`**: a single typed `switch` over the card
-discriminated union. Adding a card type = add a variant to `domain/types.ts`,
-a component under `cards/`, and one `case`. Nothing else changes.
+discriminated union. Adding a card type = add a variant to `domain/types.ts`, a
+component under `cards/`, and one `case`. Nothing else changes.
 
 ## Cases addressed
 
 Every card type and edge case from the sample payload:
 
-| Case | Handling |
-|------|----------|
-| `picture` | Full-bleed photo, thumbhash placeholder → fade-in |
-| `picture` **with prompt** | Legible caption strip overlaid on the image |
-| `prompt_answer` | Category chip + question + emphasised answer |
-| `sport_card` | Per-sport icon, label, and a 3-bar intensity meter |
-| `info_card` | Two-column vitals grid; **nullable fields (`education`) are dropped** |
-| `locked_picture` | Blurred thumbhash + lock + "Débloquer" premium gate (no `imageUrl`) |
-| **Unknown type** | Degrades gracefully (silent in prod, hint in `__DEV__`) |
-| Card **ordering** | Always sorted by `position` in `api/feed.ts` |
-| Unknown enum values | `humanize()` fallback — never shows raw `snake_case` |
-| Variable card counts | Data-driven — each profile renders whatever it has |
-| Loading / error / empty | Skeleton shimmer · retry · empty state |
+| Case                        | Handling                                                             |
+| --------------------------- | ------------------------------------------------------------------- |
+| `picture`                   | Full-bleed photo, thumbhash placeholder → fade-in                   |
+| `picture` **with prompt**   | Legible caption strip over a gradient scrim, clear of the like button |
+| `prompt_answer`             | Muted question + emphasised answer; text can never sit under the heart |
+| `sport_card`                | Apple-Watch **activity rings** + weekly-sessions legend (color-matched) |
+| `info_card`                 | Vitals as chips; **nullable fields (`education`) are dropped**       |
+| `locked_picture`            | Blurred thumbhash + lock + "Débloquer" premium gate (no `imageUrl`) |
+| **Unknown type**            | Degrades gracefully (silent in prod, hint in `__DEV__`)             |
+| Card **ordering**           | Always sorted by `position` in `api/feed.ts`                        |
+| Unknown enum values         | `humanize()` fallback — never shows raw `snake_case`                |
+| Variable card counts        | Data-driven — each profile renders whatever it has                 |
+| Loading / error / empty     | Skeleton shimmer · retry · empty state                             |
 
 ## Interactions & animation
 
-- **Like** — a Hinge-style heart on photos & prompts. Springs with an overshoot
-  and fires a one-shot ring + particle **burst** (`LikeButton`, all Reanimated),
-  plus a haptic. Wired to a TanStack Query mutation stub (`useLikeCard`).
-- **One profile at a time** (`ProfileDeck` / `useProfileDeck`) — like every
-  dating app, you see a single profile, scroll its cards vertically, then act.
-  **Pass** (sticky ✕, bottom-left) throws the card off to the left; **like**
-  throws it to the right; both reveal the next profile with a slide-in. Running
-  out shows a "seen everyone" state with reset.
+- **Like** — a white heart button on photos & prompts. Springs with an overshoot
+  and fires a one-shot ring + particle **burst** in the brand pink
+  (`LikeButton`, all Reanimated), plus a haptic. Wired to a TanStack Query
+  mutation stub (`useLikeCard`).
+- **One profile at a time** (`ProfileDeck` / `useProfileDeck`) — you see a single
+  profile, scroll its cards, then act. **Pass** (sticky ✕, bottom-left) throws
+  the card left; **like** throws it right; both reveal the next with a slide-in.
+  A soft bottom scrim fades content beneath the floating ✕ so it always reads as
+  a control on top.
+- **Rewind** — the top-bar ↺ control brings back the profile you just acted on
+  (disabled at the start of the deck).
 - **Pull-to-refresh** restarts the deck from the top.
-
-> **A note on FlashList:** an earlier version rendered every profile in one
-> `@shopify/flash-list`. The one-at-a-time deck makes that moot — there's no long
-> list to virtualize, only the current profile's handful of cards in a
-> `ScrollView` — so the dependency was removed.
 
 ## Deliberately not built
 
-Kept lean per the brief (no over-engineering): no navigation stack (single
-screen), no global state lib (server state lives in TanStack Query; local state
-is just the like toggle + the set of passed profiles), and no `useEffect` for
-data flow (the one effect is the skeleton's shimmer loop).
+Kept lean per the brief (no over-engineering): the **Likes / Matches / Profile**
+tabs are honest placeholders (the feed is the exercise); **filters** and
+**boost** in the top bar are presentational chrome; no navigation library (one
+built screen → a single `tab` state); no global state lib (server state lives in
+TanStack Query, local state is just the like toggle + the deck index).

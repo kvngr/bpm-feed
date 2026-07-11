@@ -12,6 +12,6 @@ export const feedKeys = {
 export function useFeed() {
   return useQuery({
     queryKey: feedKeys.all,
-    queryFn: fetchFeed,
+    queryFn: ({ signal }) => fetchFeed(signal),
   });
 }

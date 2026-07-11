@@ -1,4 +1,4 @@
-import { Pressable, View } from "react-native";
+import { Pressable } from "react-native";
 import Animated, {
   Easing,
   interpolate,
@@ -9,7 +9,7 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from "react-native-reanimated";
-import { Icon } from "./Icon";
+import { Icon } from "@/components/ui/Icon";
 import { colors, buttonShadow, circleStyle, ACTION_BUTTON_SIZE } from "@/theme/tokens";
 import { haptics } from "@/lib/haptics";
 
@@ -50,7 +50,7 @@ function Particle({ progress, dx, dy }: { progress: SharedValue<number>; dx: num
 /** The expanding ring behind the heart. */
 function Ring({ progress }: { progress: SharedValue<number> }) {
   const style = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.1, 1], [0, 0.5, 0]),
+    opacity: interpolate(progress.value, [0, 0.1, 1], [0, 0.6, 0]),
     transform: [{ scale: interpolate(progress.value, [0, 1], [0.5, 1.8]) }],
   }));
   return (
@@ -66,9 +66,11 @@ function Ring({ progress }: { progress: SharedValue<number> }) {
 }
 
 /**
- * Controlled like button. On a *new* like it fires a haptic, pops the heart
- * with a spring overshoot, and plays a one-shot ring + particle burst. Unliking
- * is a quieter dip. `progress` rests at 0 so the burst is invisible until fired.
+ * Controlled like button — a white circle with a heart, matching BPM's photo
+ * card affordance. On a *new* like it fires a haptic, pops the heart with a
+ * spring overshoot, and plays a one-shot ring + particle burst in the brand
+ * pink. Unliking is a quieter dip. `progress` rests at 0 so the burst is
+ * invisible until fired.
  */
 export function LikeButton({ liked, onToggle }: LikeButtonProps) {
   const scale = useSharedValue(1);
@@ -80,7 +82,7 @@ export function LikeButton({ liked, onToggle }: LikeButtonProps) {
       haptics.medium();
       scale.value = withSequence(
         withTiming(1.35, { duration: 120, easing: Easing.out(Easing.quad) }),
-        withSpring(1, { damping: 6, stiffness: 220, mass: 0.6 })
+        withSpring(1, { damping: 6, stiffness: 220, mass: 0.6 }),
       );
       progress.value = 0;
       progress.value = withTiming(1, { duration: 520, easing: Easing.out(Easing.quad) });
@@ -88,7 +90,7 @@ export function LikeButton({ liked, onToggle }: LikeButtonProps) {
       haptics.selection();
       scale.value = withSequence(
         withTiming(0.8, { duration: 100 }),
-        withSpring(1, { damping: 10, stiffness: 200 })
+        withSpring(1, { damping: 10, stiffness: 200 }),
       );
     }
     onToggle();
@@ -101,8 +103,9 @@ export function LikeButton({ liked, onToggle }: LikeButtonProps) {
       onPress={handlePress}
       hitSlop={10}
       accessibilityRole="button"
+      accessibilityState={{ selected: liked }}
       accessibilityLabel={liked ? "Retirer le like" : "Liker"}
-      style={[buttonShadow, circleStyle(ACTION_BUTTON_SIZE)]}
+      style={[buttonShadow, circleStyle(ACTION_BUTTON_SIZE, colors.white)]}
     >
       <Ring progress={progress} />
       {PARTICLES.map((p, i) => (
@@ -112,7 +115,7 @@ export function LikeButton({ liked, onToggle }: LikeButtonProps) {
         <Icon
           name={liked ? "heart" : "heart-outline"}
           size={25}
-          color={liked ? colors.brand : colors.brand}
+          color={liked ? colors.brand : colors.onLight}
         />
       </Animated.View>
     </Pressable>

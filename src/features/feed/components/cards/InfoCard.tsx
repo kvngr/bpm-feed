@@ -1,12 +1,12 @@
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Icon } from "@/components/ui/Icon";
 import { INFO_FIELDS } from "@/domain/infoFields";
-import { colors } from "@/theme/tokens";
+import { colors, radius, spacing, typography } from "@/theme/tokens";
 import type { InfoCard as InfoCardModel } from "@/domain/types";
 
 /**
- * Profile vitals as a wrap of chips (Hinge-style). Rows whose value resolves to
- * `null` (e.g. missing education) are dropped, so no empty chips appear.
+ * Profile vitals as a wrap of chips. Rows whose value resolves to `null` (e.g.
+ * missing education) are dropped, so no empty chips appear.
  */
 export function InfoCard({ content }: { content: InfoCardModel["content"] }) {
   type Row = { key: string; icon: string; text: string | null };
@@ -18,19 +18,32 @@ export function InfoCard({ content }: { content: InfoCardModel["content"] }) {
   const visible = rows.filter((row): row is Row & { text: string } => !!row.text);
 
   return (
-    <View className="p-6">
-      <Text className="mb-4 text-lg font-bold text-ink">Bon à savoir</Text>
-      <View className="flex-row flex-wrap gap-2">
+    <View style={styles.card}>
+      <Text style={styles.title}>Bon à savoir</Text>
+      <View style={styles.chips}>
         {visible.map((row) => (
-          <View
-            key={row.key}
-            className="flex-row items-center gap-1.5 rounded-full bg-surface-sunken px-3.5 py-2"
-          >
-            <Icon name={row.icon} size={15} color={colors.brand} />
-            <Text className="text-sm font-medium text-ink">{row.text}</Text>
+          <View key={row.key} style={styles.chip}>
+            <Icon name={row.icon} size={15} color={colors.textMuted} />
+            <Text style={styles.chipText}>{row.text}</Text>
           </View>
         ))}
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: { padding: spacing.xxl },
+  title: { ...typography.cardTitle, marginBottom: spacing.lg },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs + 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceHigh,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.sm,
+  },
+  chipText: typography.label,
+});

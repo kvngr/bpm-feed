@@ -1,9 +1,6 @@
 import { View } from "react-native";
 import Svg, { Circle, G } from "react-native-svg";
 
-/** Muted palette (reads on a light surface), outer → inner: green, violet, rose. */
-export const RING_PALETTE = ["#5BBE8E", "#8E71C9", "#DF7CA3"];
-
 export interface RingSpec {
   /** Fill fraction, 0 → 1. */
   value: number;
@@ -16,23 +13,26 @@ interface ActivityRingsProps {
   strokeWidth?: number;
   /** Space between concentric rings. */
   gap?: number;
-  /** Track behind the unfilled part of each ring. */
-  trackColor?: string;
+  /** Track behind the unfilled part of each ring (caller passes a theme token). */
+  trackColor: string;
 }
 
 /**
  * Concentric progress rings, Apple-Watch-activity style. Each ring is an arc
  * whose length encodes `value`, starting at 12 o'clock and sweeping clockwise
- * (the whole group is rotated -90°), with rounded caps. A soft glow is faked
- * with two wider, low-opacity strokes underneath the crisp arc — reliable
- * across platforms without SVG filters. Tuned for a light surface.
+ * (the whole group is rotated -90°), with rounded caps. A soft neon glow is
+ * faked with two wider, low-opacity strokes underneath the crisp arc —
+ * reliable across platforms without SVG filters. Tuned for a dark surface.
+ *
+ * Purely presentational: it knows nothing about sports. Callers pass the
+ * colors (see `RING_PALETTE` in the theme).
  */
 export function ActivityRings({
   rings,
-  size = 136,
-  strokeWidth = 12,
-  gap = 7,
-  trackColor = "#E9E3D8",
+  size = 128,
+  strokeWidth = 11,
+  gap = 6,
+  trackColor,
 }: ActivityRingsProps) {
   const center = size / 2;
   const widestGlow = strokeWidth + 12;
@@ -69,8 +69,8 @@ export function ActivityRings({
                     cy={center}
                     r={r}
                     stroke={ring.color}
-                    strokeOpacity={0.05}
-                    strokeWidth={strokeWidth + 9}
+                    strokeOpacity={0.12}
+                    strokeWidth={strokeWidth + 10}
                     strokeLinecap="round"
                     strokeDasharray={dashArray}
                     fill="none"
@@ -82,7 +82,7 @@ export function ActivityRings({
                     cy={center}
                     r={r}
                     stroke={ring.color}
-                    strokeOpacity={0.1}
+                    strokeOpacity={0.2}
                     strokeWidth={strokeWidth + 4}
                     strokeLinecap="round"
                     strokeDasharray={dashArray}

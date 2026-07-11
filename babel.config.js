@@ -1,13 +1,9 @@
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: [
-      // `jsxImportSource: "nativewind"` lets us use `className` on RN components.
-      ["babel-preset-expo", { jsxImportSource: "nativewind" }],
-      "nativewind/babel",
-    ],
+    presets: ["babel-preset-expo"],
     // Reanimated 4 ships its Babel plugin from `react-native-worklets`.
-    // It powers Reanimated *and* Moti, and must stay LAST in the list.
+    // It must stay LAST in the plugin list.
     plugins: ["react-native-worklets/plugin"],
   };
 };

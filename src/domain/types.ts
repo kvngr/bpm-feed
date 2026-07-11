@@ -53,20 +53,21 @@ export interface SportCard extends BaseCard {
   };
 }
 
-/** Free-form profile facts. Every field is optional/nullable in practice. */
+/** Free-form profile facts. Every field is optional/nullable in practice, so
+ *  the renderers (`infoFields.ts`) guard each one and drop the empties. */
 export interface ProfileInfo {
-  age: number;
-  height: number;
-  city: string;
-  relationshipType: string;
-  zodiac: string;
-  diet: string;
-  drinking: string;
-  smoking: string;
-  drugs: string;
-  kids: string;
-  pets: string;
-  religion: string;
+  age: number | null;
+  height: number | null;
+  city: string | null;
+  relationshipType: string | null;
+  zodiac: string | null;
+  diet: string | null;
+  drinking: string | null;
+  smoking: string | null;
+  drugs: string | null;
+  kids: string | null;
+  pets: string | null;
+  religion: string | null;
   job: string | null;
   education: string | null;
   originCity: string | null;
